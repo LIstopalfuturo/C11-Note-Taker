@@ -10,4 +10,4 @@ router.use("/notes",noteRoutes);
 
 
 
-module.export=router;
+module.exports=router;

@@ -1,20 +1,46 @@
-const router=require("express").Router();
-const fs =require("fs");
+const router = require("express").Router();
+const fs = require("fs");
+const { readFromFile, readAndAppend, writeToFile } = require('../../helpers/fsUtils');
+const path = require('path');
 
-//http://localhost:3001/api/notes/
-router.get("/",(req,res)=>{
+// GET Route
+router.get("/", (req, res) => {
+    readFromFile('./db/db.json').then((data) => res.json(JSON.parse(data)));
+});
 
-    fs.readFile("./db/db.json","utf-8",(err,data)=>{
-        if(err){
-            res.status(500).json(err)
-        }
-        const notes=JSON.parse(data)
-        res.json(notes)
-    })
-})
+// POST Route
+router.post("/", (req, res) => {
+    const { title, text } = req.body;
+    
+    if (!title || !text) {
+        return res.status(400).json({ error: 'Title and text are required' });
+    }
 
+    try {
+        const newNote = {
+            title,
+            text,
+            id: Math.random().toString(36).substr(2, 9)
+        };
 
+        readAndAppend(newNote, './db/db.json');
+        res.status(201).json(newNote);
+    } catch (error) {
+        console.error('Error saving note:', error);
+        res.status(500).json({ error: 'Failed to save note' });
+    }
+});
 
-
+// DELETE Route
+router.delete("/:id", (req, res) => {
+    const noteId = req.params.id;
+    readFromFile('./db/db.json')
+        .then((data) => JSON.parse(data))
+        .then((notes) => {
+            const filteredNotes = notes.filter((note) => note.id !== noteId);
+            writeToFile('./db/db.json', filteredNotes);
+            res.json({ message: 'Note deleted successfully' });
+        });
+});
 
 module.exports=router;
