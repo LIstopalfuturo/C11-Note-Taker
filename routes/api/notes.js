@@ -38,8 +38,15 @@ router.delete("/:id", (req, res) => {
         .then((data) => JSON.parse(data))
         .then((notes) => {
             const filteredNotes = notes.filter((note) => note.id !== noteId);
+            if (filteredNotes.length === notes.length) {
+                return res.status(404).json({ error: 'Note not found' });
+            }
             writeToFile('./db/db.json', filteredNotes);
             res.json({ message: 'Note deleted successfully' });
+        })
+        .catch((error) => {
+            console.error('Error deleting note:', error);
+            res.status(500).json({ error: 'Failed to delete note' });
         });
 });
 
